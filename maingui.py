@@ -2,16 +2,124 @@ from Tkinter import *
 import tkMessageBox
 import add_images as add_img
 import login as l
-
+import Tkinter, Tkconstants, tkFileDialog
+import socket
+import os
 
 
 msgx=100
 msgy=180
+fmsgx=100
+fmsgy=220
+path=""
 logged=0
-fil=open("info.txt","a+")
-readed=fil.read()
+fil1=open("info.txt","a+")
+readed=fil1.read()
 
 window=Tk()
+
+def filename(path):
+	fname=""
+	for ch in path[::-1]:
+		if ch=='/':
+			break
+		fname=ch+fname
+	#print fname
+	return fname
+
+def getpath(event):
+	global path
+	path=tkFileDialog.askopenfilename(initialdir = "/home",title = "Select file",filetypes = (("all files","*.*"),("jpeg files","*.jpg"),
+					("text files","*.txt"),("pdf files","*.pdf"),("mp4 files","*.mp4")))	
+	#print path
+
+def upload(event):
+	#print path
+	s=socket.socket()
+	
+
+
+	
+	if len(path)>0:
+		s.connect(('127.0.0.1',4001))
+		s.send("u")
+		flag=s.recv(100)
+		#print path
+		name=filename(path)
+		#print name
+		s.send(name)
+		dummy=s.recv(20)
+		try:
+			file=open(path,"r+b")
+		except:
+			pdf=Label(file_f,text="Unable to open file!\nCheck permission!",width=25,height=3)
+			pdf.place(x=fmsgx,y=fmsgy)
+			path=""
+			return
+			
+		read=file.read(1024)
+		while True:
+			s.send(read)
+			if (len(read)<=0):
+				break
+			read=file.read(1024)
+		psf=Label(file_f,text="File uploaded",width=25,height=3)
+		global path
+		path=""
+		psf.place(x=fmsgx,y=fmsgy)
+		
+	else:
+		psf=Label(file_f,text="Please select file to upload",width=25,height=3)
+		psf.place(x=fmsgx,y=fmsgy)
+		#print "SELECT FILE"
+	s.close()
+	
+	
+def download(event):
+	
+	
+	name=fil.get()
+	if name!="":
+		s=socket.socket()
+		s.connect(('127.0.0.1',4001))
+		s.send("d")
+		dummy=s.recv(20)		
+	
+		#print len(name)
+		#print name
+		s.send(name)
+		avail=s.recv(10)
+		if avail=="1":
+			s.send("1")
+			#name=s.recv(20)
+			f= open(name,"w")
+			f.close()
+			#s.send("send")
+			
+			while True:
+				data=s.recv(1024)
+				#print data
+				f= open(name,"a+b")
+				#print "recieving length"+str(len(data))
+				f.write(data)
+				f.close()
+				
+				if (len(data)<1024):
+					#print "breaking"
+					break
+				
+			psf=Label(file_f,text="FILE RECIEVED",width=25,height=3)
+			psf.place(x=fmsgx,y=fmsgy)
+		else:
+			fnf=Label(file_f,text="FILE NOT FOUND",width=25,height=3)
+			fnf.place(x=fmsgx,y=fmsgy)
+	else:
+		fsb=Label(file_f,text="Please fill search bar!",width=25,height=3)
+		fsb.place(x=fmsgx,y=fmsgy)
+	
+
+	
+	
 
 def lclicked(event):
 	clabel=Label(login_f,text="logged in",width=25,height=3)
@@ -53,14 +161,14 @@ def lclicked(event):
 		result = tkMessageBox.askquestion("FAST LOGIN", "Save this info for fast login ?\nprevious login info will be erased !", icon='info')
 		
 	if result=="yes" and stat==1:
-			global fil
-			fil.close()
-			fil=open("info.txt","w+")
-			fil.write(user.get()+"\n"+pas.get())			
-			fil.close()
-			fil=open("info.txt","r")
-			readed=fil.read()
-			fil.close()	
+			global fil1
+			fil1.close()
+			fil1=open("info.txt","w+")
+			fil1.write(user.get()+"\n"+pas.get())			
+			fil1.close()
+			fil1=open("info.txt","r")
+			readed=fil1.read()
+			fil1.close()	
 
 
 	
@@ -155,5 +263,26 @@ pas.place(x=160,y=70)
 logout.place(x=280,y=110)	
 fast_login.place(x=40,y=110)
 login.place(x=180,y=110)
+
+
+#packing file sharing
+fwlabel=Label(file_f,text="Welcome!",width=25,height=3)
+fwlabel.place(x=fmsgx,y=fmsgy)
+
+selectl=Button(file_f,text="SELECT FILE")
+selectl.bind('<Button-1>',getpath)
+selectl.place(x=30,y=20)
+
+uploadl=Button(file_f,text="UPLOAD")
+uploadl.bind('<Button-1>',upload)
+uploadl.place(x=30,y=60)
+
+fil=Entry(file_f)
+fil.place(x=30,y=110)
+
+downl=Button(file_f,text="DOWNLOAD")
+downl.bind('<Button-1>',download)
+downl.place(x=30,y=140)
+
 
 window.mainloop()

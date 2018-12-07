@@ -33,8 +33,12 @@ def communication(c):
 		print "coming"
 		c.send("ok")
 		name=c.recv(100)
+		
 		print "request for:"+name
 		path=find(name,"./")
+		filesize=os.path.getsize(path)
+		c.send(str(filesize))
+		dummy=c.recv(100)
 		if path!=None:
 			c.send("1")
 			dummy=c.recv(10)

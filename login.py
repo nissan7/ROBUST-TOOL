@@ -16,11 +16,13 @@ def login(user,pas):
 	soup=BeautifulSoup(html,"html5lib")
 	item=soup.find('message')
 	msg=item.string
-	#print msg
+	#print msg[0:1]
 	if msg[7]=='T':
 		return 0
 	elif msg[10]==' ':
 		return 1
+	elif msg[7]=="M":
+		return 3
 	else:
 		return 2
 #1-logged in
